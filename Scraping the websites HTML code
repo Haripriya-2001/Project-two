@@ -1,0 +1,54 @@
+File name:file.py
+
+file=open('Oyo.csv', 'r')
+each=file.read()
+print(each)
+
+Program save name:requests.py
+
+req=requests.get("https://www.oyorooms.com/hotels-in-banglore/?page=")
+content=req.content
+print(content)
+
+Main program name:Oyo.csv.py
+
+import requests
+from bs4 import BeautifulSoup
+import pandas
+
+oyo_url="https://www.oyorooms.com/hotels-in-banglore/?page="
+page_num_Max=int(input("Enter a page number to visit: "))
+scraped_info_list=[]
+for page_num in range(1,page_num_Max):
+
+    req=requests.get(oyo_url)
+    content=req.content
+    soup=BeautifulSoup(content,"html.parser")
+    all_hotels=soup.find_all("div", {"class": "hotelCardListing"})
+
+    for hotel in all_hotels:
+
+        hotel_dict={}
+        hote_dict["name"]=hotel.find("h3", {"class": "listingHotelDescription_hotelName"}).text
+        hote_dict["address"]=hotel.find("span", {"itemprop": "StreetAddress"}).text
+        hote_dict["price"]=hotel.find("span", {"class": "listingPrice_finalPrice"}).text
+
+        try:
+
+            hote_dict["rating"]=hotel.find("span", {"class": "hotelRating+ratingSummary"}).text
+
+        except AttributeError:
+
+            pass
+
+        parent_amenities_element=hote.find("div", {"class": "amenityWrapper"})
+        amenities_list=[]
+        for amenity in parent_amenities_element.find_all("div", {"class": "amenityWrapper__amenity"}):
+
+            amenities_list.append(amenity.find("span", {"class": "d-body-sm"}).text.strip())
+
+            hote_dict["amenities"]=', '.join(amenities_list[:-1])
+            scraped_info_list.append(hotel_dict)
+
+dataFrame=pandas.DataFrame(scraped_info_list)
+dataFrame.to_csv("Oyo.csv")
